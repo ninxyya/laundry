@@ -4,650 +4,687 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kasir Laundry Aisha</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --success: #4cc9f0;
-            --danger: #f72585;
-            --warning: #fca311;
-            --special: #8d6e63;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-            --peritem: #2e7d32;
-            --duration: #5e35b1;
+            --bg-app: #f8fafc;
+            --surface: #ffffff;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #eef2ff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --warning: #f59e0b;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            background-color: var(--bg-app);
+            color: var(--text-main);
             min-height: 100vh;
-            padding: 20px;
+            padding: 30px 20px;
+            line-height: 1.5;
+            transition: padding 0.2s ease;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 350px;
+            width: calc(100% - 40px);
+        }
+        .toast {
+            background: var(--text-main);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Header Layout */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--primary);
+            margin-bottom: 30px;
+            background: var(--surface);
+            padding: 20px 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 14px;
         }
 
-        .logo i {
-            font-size: 2.5rem;
+        .logo-icon-wrapper {
+            background: var(--primary-light);
             color: var(--primary);
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            font-size: 1.3rem;
         }
 
         .logo h1 {
-            color: var(--dark);
+            font-size: 1.4rem;
             font-weight: 700;
-            font-size: 2rem;
+            letter-spacing: -0.025em;
         }
 
-        .logo span {
+        .logo h1 span {
             color: var(--primary);
         }
 
+        .header-info p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Main Workspace Grid (Desktop Mode) */
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 25px;
+            grid-template-columns: 1fr 1.25fr;
+            gap: 24px;
             margin-bottom: 30px;
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-            padding: 25px;
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 14px;
         }
 
         .card-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--dark);
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
+        .card-title i {
+            color: var(--primary);
+        }
+
+        /* Form Elements */
+        .form-group {
+            display: flex;
+            flex-direction: column;
             gap: 8px;
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary);
-        }
-
-        .btn-special {
-            background: var(--special);
-            color: white;
-        }
-
-        .btn-special:hover {
-            background: #7a5c50;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #3aa8d1;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-duration {
-            background: var(--duration);
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 0.85rem;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
         .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--dark);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
         }
 
         .form-control {
             width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background-color: var(--bg-app);
+            transition: all 0.2s ease;
         }
 
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+            background-color: var(--surface);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
-        
-        .special-service {
-            background-color: #f9f5f3;
-            border-left: 4px solid var(--special);
-            padding: 15px;
-            border-radius: 0 8px 8px 0;
-            margin: 15px 0;
-            display: none;
+
+        select.form-control {
+            cursor: pointer;
         }
-        
-        .peritem-service {
-            background-color: #e8f5e9;
-            border-left: 4px solid var(--peritem);
-            padding: 15px;
-            border-radius: 0 8px 8px 0;
-            margin: 15px 0;
-            display: none;
+
+        /* Buttons styling */
+        .btn {
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            user-select: none;
         }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-secondary { background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-danger { background: var(--danger-light); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:hover { background: #d97706; }
         
-        .special-info {
+        .btn-sm { padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; }
+        .btn-block { width: 100%; }
+
+        /* Panels & Badges */
+        .info-panel {
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
             font-size: 0.85rem;
-            color: var(--special);
-            margin-top: 5px;
-            font-style: italic;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-left: 4px solid transparent;
         }
-        
-        .peritem-info {
-            font-size: 0.85rem;
-            color: var(--peritem);
-            margin-top: 5px;
-            font-style: italic;
+        .info-panel-special { background-color: #fffbeb; border-left-color: var(--warning); color: #92400e; }
+        .info-panel-peritem { background-color: var(--success-light); border-left-color: var(--success); color: #065f46; }
+
+        .badge {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 0.725rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
-        
-        .duration-info {
-            font-size: 0.85rem;
-            color: var(--duration);
-            margin-top: 5px;
-            font-weight: 500;
+        .badge-regular { background: var(--primary-light); color: var(--primary); }
+        .badge-special { background: #fffbeb; color: var(--warning); }
+        .badge-peritem { background: var(--success-light); color: var(--success); }
+
+        /* Tables Utilities (Scrollable on Mobile) */
+        .table-responsive {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
-            padding: 12px 15px;
+            font-size: 0.9rem;
             text-align: left;
-            border-bottom: 1px solid #eee;
+            min-width: 450px;
         }
 
         th {
-            background-color: #f8f9fa;
+            background-color: var(--bg-app);
+            padding: 12px 14px;
             font-weight: 600;
-            color: var(--gray);
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
         }
 
-        tr:hover {
-            background-color: #f8f9fa;
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+            vertical-align: middle;
         }
 
-        .action-cell {
-            display: flex;
-            gap: 8px;
-        }
+        tr:last-child td { border-bottom: none; }
+        .action-cell { display: flex; gap: 6px; }
 
+        /* Transaction / Cart Area Split Grid */
         .transaction-section {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+            align-items: start;
+            margin-top: 5px;
+        }
+
+        .cart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .cart-items {
             max-height: 300px;
             overflow-y: auto;
-            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .empty-cart {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 35px 0;
+            font-size: 0.9rem;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
         }
 
         .cart-item {
+            background: var(--bg-app);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px;
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-            position: relative;
-        }
-        
-        .special-item {
-            background-color: #fff8f0;
-            border-left: 3px solid var(--special);
-            border-radius: 4px;
-            padding: 10px;
-        }
-        
-        .peritem-item {
-            background-color: #e8f5e9;
-            border-left: 3px solid var(--peritem);
-            border-radius: 4px;
-            padding: 10px;
-        }
-        
-        .duration-tag {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: var(--duration);
-            color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .cart-item-details {
-            flex: 1;
-            padding-right: 20px;
-        }
-
-        .cart-item-actions {
-            display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .summary-card {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 25px;
+        .cart-item-info h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 2px; }
+        .cart-item-info p { font-size: 0.85rem; color: var(--text-muted); }
+        .cart-item-meta { display: flex; align-items: center; gap: 12px; text-align: right; }
+        .duration-badge {
+            display: inline-block;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 4px;
         }
 
-        .summary-title {
-            font-size: 1.4rem;
-            margin-bottom: 20px;
-            text-align: center;
+        /* Summary Checkout Panel Card */
+        .summary-card {
+            background: var(--text-main);
+            color: white;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
 
         .summary-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .total {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-top: 20px;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 25px;
-        }
-
-        .btn-block {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .nota-section {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            margin-top: 30px;
-            display: none;
-        }
-
-        .nota-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .nota-title {
-            font-size: 1.8rem;
-            color: var(--primary);
-            margin-bottom: 5px;
-        }
-
-        .nota-detail {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .nota-items {
-            margin: 30px 0;
-        }
-
-        .nota-footer {
-            text-align: center;
-            margin-top: 40px;
-            color: var(--gray);
-        }
-
-        .print-btn {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .custom-price-info {
-            font-size: 0.85rem;
-            color: var(--special);
-            font-style: italic;
-            margin-top: 3px;
-        }
-        
-        .peritem-price-info {
-            font-size: 0.85rem;
-            color: var(--peritem);
-            font-style: italic;
-            margin-top: 3px;
-        }
-        
-        .completion-info {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background-color: #e3f2fd;
-            border-radius: 6px;
             font-size: 0.9rem;
+            color: #94a3b8;
         }
-        
-        .completion-info strong {
-            color: var(--primary);
-        }
-        
-        .duration-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .duration-btn {
-            padding: 5px 10px;
-            background: rgba(94, 53, 177, 0.1);
-            border: 1px solid var(--duration);
-            border-radius: 6px;
-            color: var(--duration);
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-        }
-        
-        .duration-btn.active {
-            background: var(--duration);
+
+        .summary-item.total {
+            border-top: 1px solid #334155;
+            padding-top: 14px;
+            font-size: 1.3rem;
+            font-weight: 700;
             color: white;
         }
 
-        @media print {
-            body * {
-                visibility: hidden;
-            background: white;
-            color: black;
+        .completion-box {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            border-left: 3px solid var(--primary);
         }
-            .nota-section, .nota-section * {
-                visibility: visible;
-                background: white;
-                color: black;
-            }
-            .nota-section {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                box-shadow: none;
-                padding: 20px;
-            }
-            .print-btn {
-                display: none;
-            }
+        .completion-box strong { color: white; }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 10px;
+            margin-top: 4px;
         }
 
-        @media (max-width: 900px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            .transaction-section {
-                grid-template-columns: 1fr;
-            }
+        /* Badge Selection for Duration Grid */
+        .duration-control {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .duration-btn {
+            padding: 10px 6px;
+            background: var(--bg-app);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .duration-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Printed Invoice Section Styles */
+        .nota-section {
+            background: var(--surface);
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            margin-top: 30px;
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .nota-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            border-bottom: 2px dashed var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .nota-brand h2 { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+        .nota-brand p { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+        .nota-meta { text-align: right; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; }
+
+        .nota-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+            background: var(--bg-app);
+            padding: 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+        }
+        .nota-grid p strong { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; display: block; margin-bottom: 2px; }
+
+        .nota-table-wrapper { margin: 16px 0; }
+        .nota-table-wrapper table th { background: transparent; color: var(--text-main); border-bottom: 2px solid var(--text-main); }
+
+        .nota-summary-box {
+            margin-left: auto;
+            width: 100%;
+            max-width: 360px;
+            background: var(--bg-app);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .nota-summary-row { display: flex; justify-content: space-between; font-size: 0.85rem; }
+        .nota-summary-row.total { font-weight: 700; font-size: 1.05rem; border-top: 1px solid var(--border); padding-top: 8px; color: var(--primary); }
+        .nota-footer { margin-top: 30px; padding-top: 16px; border-top: 1px dashed var(--border); text-align: center; font-size: 0.775rem; color: var(--text-muted); line-height: 1.5; }
+        .print-actions { display: flex; justify-content: center; margin-top: 20px; }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+            .main-content { grid-template-columns: 1fr; gap: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 14px 10px; }
+            header { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; margin-bottom: 20px; }
+            .header-info { align-self: flex-end; }
+            .card { padding: 16px; }
+            .transaction-section { grid-template-columns: 1fr; gap: 20px; }
+            .duration-control { grid-template-columns: repeat(2, 1fr); }
+            .nota-header { flex-direction: column; align-items: flex-start; gap: 14px; }
+            .nota-meta { text-align: left; }
+            .nota-grid { grid-template-columns: 1fr; }
+            .nota-section { padding: 16px; }
+            .nota-summary-box { max-width: 100%; }
+        }
+
+        @media (max-width: 375px) {
+            .logo h1 { font-size: 1.2rem; }
+            .action-buttons { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            body * { visibility: hidden; }
+            .nota-section, .nota-section * { visibility: visible; }
+            .nota-section { position: absolute; left: 0; top: 0; width: 100%; border: none; box-shadow: none; padding: 0; margin: 0; }
+            .print-actions { display: none; }
         }
     </style>
 </head>
 <body>
+
+    <div class="toast-container" id="toast-container"></div>
+
     <div class="container">
         <header>
             <div class="logo">
-                <i class="fas fa-tshirt"></i>
-                <h1>Laundry<span>aisha</span></h1>
+                <div class="logo-icon-wrapper">
+                    <i class="fas fa-soap"></i>
+                </div>
+                <div>
+                    <h1>Laundry<span>aisha</span></h1>
+                </div>
             </div>
             <div class="header-info">
-                <p id="current-date">Selasa, 22 Juli 2025</p>
+                <p><i class="far fa-calendar-alt"></i> <span id="current-date"></span></p>
             </div>
         </header>
 
         <div class="main-content">
-            <!-- Panel Layanan -->
+            <!-- Left Side: Master Services -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Manajemen Layanan</h2>
-                    <button class="btn btn-primary" id="add-service-btn">
-                        <i class="fas fa-plus"></i> Tambah
+                    <h2 class="card-title"><i class="fas fa-concierge-bell"></i> Manajemen Layanan</h2>
+                    <button class="btn btn-secondary btn-sm" id="reset-service-btn" onclick="resetServiceForm()">
+                        <i class="fas fa-redo"></i> Reset
                     </button>
                 </div>
                 
                 <div class="form-group">
                     <label for="service-name">Nama Layanan</label>
-                    <input type="text" id="service-name" class="form-control" placeholder="Masukkan nama layanan">
+                    <input type="text" id="service-name" class="form-control" placeholder="Contoh: Cuci Kilat Premium">
                 </div>
                 
                 <div class="form-group">
                     <label for="service-type">Jenis Layanan</label>
                     <select id="service-type" class="form-control">
-                        <option value="regular">Biasa (Per kg)</option>
-                        <option value="special">Custom (Harga Tetap)</option>
-                        <option value="peritem">Item/Barang</option>
+                        <option value="regular">Biasa (Dihitung per Kg)</option>
+                        <option value="special">Custom (Harga Diinput Fleksibel)</option>
+                        <option value="peritem">Satuan (Dihitung per Item)</option>
                     </select>
                 </div>
                 
                 <div class="form-group" id="price-input-group">
-                    <label for="service-price">Harga (Rp)</label>
-                    <input type="number" id="service-price" class="form-control" placeholder="Masukkan harga">
+                    <label for="service-price">Harga Standard (Rp)</label>
+                    <input type="number" id="service-price" class="form-control" placeholder="Masukkan nominal harga">
+                </div>
+
+                <div class="form-group" id="min-weight-input-group">
+                    <label for="service-min-weight">Minimal Timbangan (Kg)</label>
+                    <input type="number" id="service-min-weight" class="form-control" placeholder="Isi 1 jika tidak ada batas minimal" min="0.1" step="0.1" value="1">
                 </div>
                 
                 <div class="form-group">
-                    <label for="service-duration">Durasi (hari)</label>
-                    <input type="number" id="service-duration" class="form-control" placeholder="Jumlah hari pengerjaan" min="1" value="1">
-                    <p class="duration-info">Durasi menentukan waktu penyelesaian layanan</p>
+                    <label for="service-duration">Durasi Default Terkait (Hari)</label>
+                    <input type="number" id="service-duration" class="form-control" placeholder="Jumlah hari proses" min="1" value="1">
                 </div>
                 
-                <div class="special-service" id="special-service">
-                    <h4><i class="fas fa-star"></i> Layanan Khusus</h4>
-                    <p class="special-info">Untuk layanan khusus, harga akan diinput saat transaksi</p>
+                <div class="info-panel info-panel-special" id="special-service-panel" style="display: none;">
+                    <strong><i class="fas fa-info-circle"></i> Layanan Kategori Custom</strong>
+                    <span>Harga item ini dikosongkan sekarang, penentuan harga final diisi saat transaksi di kasir.</span>
                 </div>
                 
-                <div class="peritem-service" id="peritem-service">
-                    <h4><i class="fas fa-cubes"></i> Layanan Per Item</h4>
-                    <p class="peritem-info">Harga akan dikalikan dengan jumlah item yang dipilih</p>
+                <div class="info-panel info-panel-peritem" id="peritem-service-panel" style="display: none;">
+                    <strong><i class="fas fa-info-circle"></i> Layanan Kategori Satuan</strong>
+                    <span>Harga nominal di atas akan otomatis dikalikan secara mutlak dengan total unit barang.</span>
                 </div>
                 
                 <button class="btn btn-primary btn-block" id="save-service-btn">
-                    <i class="fas fa-save"></i> Simpan Layanan
+                    <i class="fas fa-save"></i> Simpan Modul Layanan
                 </button>
                 
-                <div class="services-table">
+                <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
-                                <th>Nama Layanan</th>
-                                <th>Harga</th>
-                                <th>Durasi</th>
-                                <th>Jenis</th>
+                                <th>Layanan</th>
+                                <th>Harga Pokok</th>
+                                <th>Estimasi</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="services-list">
-                            <!-- Daftar layanan akan dimuat di sini -->
                         </tbody>
                     </table>
                 </div>
             </div>
             
-            <!-- Panel Transaksi -->
+            <!-- Right Side: Cashier Counter -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Transaksi Laundry</h2>
+                    <h2 class="card-title"><i class="fas fa-calculator"></i> Transaksi Baru</h2>
                 </div>
                 
                 <div class="form-group">
                     <label for="customer-name">Nama Pelanggan</label>
-                    <input type="text" id="customer-name" class="form-control" placeholder="Masukkan nama pelanggan">
+                    <input type="text" id="customer-name" class="form-control" placeholder="Ketik nama lengkap">
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone-number">Nomor Telepon</label>
-                    <input type="text" id="phone-number" class="form-control" placeholder="Masukkan nomor telepon">
+                    <label for="phone-number">Nomor Telepon WA</label>
+                    <input type="text" id="phone-number" class="form-control" placeholder="Contoh: 0831xxxxxxxx">
                 </div>
                 
                 <div class="form-group">
-                    <label for="select-service">Pilih Layanan</label>
+                    <label for="select-service">Pilih Kategori Paket</label>
                     <select id="select-service" class="form-control">
-                        <option value="">-- Pilih Layanan --</option>
+                        <option value="">-- Silahkan Pilih Jenis Layanan --</option>
                     </select>
                 </div>
                 
                 <div id="weight-input-group">
                     <div class="form-group">
-                        <label for="item-weight">Berat (kg)</label>
-                        <input type="number" id="item-weight" class="form-control" placeholder="Masukkan berat" min="0.1" step="0.1" value="1">
+                        <label for="item-weight">Berat Timbangan (Kg)</label>
+                        <input type="number" id="item-weight" class="form-control" placeholder="0.0" min="0.1" step="0.1" value="1">
                     </div>
                 </div>
                 
                 <div id="peritem-input-group" style="display: none;">
                     <div class="form-group">
-                        <label for="item-quantity">Jumlah Item</label>
-                        <input type="number" id="item-quantity" class="form-control" placeholder="Masukkan jumlah item" min="1" value="1">
+                        <label for="item-quantity">Kuantitas Total (Item/Pcs)</label>
+                        <input type="number" id="item-quantity" class="form-control" placeholder="1" min="1" value="1">
                     </div>
                 </div>
                 
-                <div class="special-service" id="special-reason-group" style="display: none;">
+                <div id="special-reason-group" style="display: none;" class="info-panel info-panel-special">
                     <div class="form-group">
-                        <label for="special-price">Harga Khusus (Rp)</label>
-                        <input type="number" id="special-price" class="form-control" placeholder="Masukkan harga khusus" min="1">
-                        <p class="custom-price-info">Masukkan harga untuk layanan ini</p>
+                        <label for="special-price" style="color: inherit;">Harga Fleksibel Custom (Rp)</label>
+                        <input type="number" id="special-price" class="form-control" placeholder="Masukkan harga kesepakatan" min="1">
                     </div>
-                    <div class="form-group">
-                        <label for="special-reason">Keterangan</label>
-                        <textarea id="special-reason" class="form-control" placeholder="Masukkan keterangan untuk layanan ini"></textarea>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="special-reason" style="color: inherit;">Catatan / Deskripsi Pakaian</label>
+                        <textarea id="special-reason" class="form-control" rows="2" placeholder="Contoh: Karpet bulu tebal noda kopi..."></textarea>
                     </div>
                 </div>
                 
-                <div class="form-group" id="duration-control-group">
-                    <label>hari jadi</label>
+                <div class="form-group">
+                    <label>Durasi Paket Dipilih Saat Ini</label>
                     <div class="duration-control">
                         <button class="duration-btn active" data-days="1">1 Hari</button>
                         <button class="duration-btn" data-days="2">2 Hari</button>
                         <button class="duration-btn" data-days="3">3 Hari</button>
-                         <button class="duration-btn" data-days="4">4 Hari</button>
-                          <button class="duration-btn" data-days="5">5 Hari</button>
-                           <button class="duration-btn" data-days="6">6 Hari</button>
-                        <button class="duration-btn" data-days="7">1 Minggu</button>
+                        <button class="duration-btn" data-days="7">1 Mggu</button>
                     </div>
                 </div>
                 
                 <button class="btn btn-primary btn-block" id="add-to-cart">
-                    <i class="fas fa-cart-plus"></i> Tambah ke Keranjang
+                    <i class="fas fa-shopping-basket"></i> Masukkan ke Keranjang
                 </button>
                 
                 <div class="transaction-section">
-                    <div>
-                        <h3>Keranjang Belanja</h3>
+                    <div class="cart-container">
+                        <h3 style="font-size: 0.95rem; font-weight: 700;">List Item</h3>
                         <div class="cart-items" id="cart-items">
-                            <!-- Item keranjang akan dimuat di sini -->
                         </div>
                     </div>
                     
                     <div class="summary-card">
-                        <h3 class="summary-title">Ringkasan Pembayaran</h3>
+                        <h3 style="font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Ringkasan</h3>
                         <div class="summary-item">
-                            <span>Subtotal</span>
+                            <span>Subtotal Tagihan</span>
                             <span id="subtotal">Rp 0</span>
                         </div>
-                        <div class="summary-item total">
+                        <div class="summary-item total" id="total-wrapper">
                             <span>TOTAL</span>
                             <span id="total">Rp 0</span>
                         </div>
                         
-                        <div class="completion-info" id="completion-info">
-                            <!-- Estimasi waktu selesai akan ditampilkan di sini -->
+                        <div class="completion-box" id="completion-info">
+                            Estimasi waktu penyelesaian item kosong.
                         </div>
                         
                         <div class="action-buttons">
-                            <button class="btn btn-light btn-block" id="reset-transaction">
-                                <i class="fas fa-trash"></i> Reset
+                            <button class="btn btn-danger" id="reset-transaction" onclick="resetTransaction()">
+                                <i class="fas fa-trash-alt"></i> Clear
                             </button>
-                            <button class="btn btn-warning btn-block" id="checkout-btn">
-                                <i class="fas fa-receipt"></i> Buat Nota
+                            <button class="btn btn-warning" id="checkout-btn">
+                                <i class="fas fa-receipt"></i> Nota
                             </button>
                         </div>
                     </div>
@@ -655,77 +692,84 @@
             </div>
         </div>
         
-        <!-- Nota Section -->
+        <!-- Nota / Invoice -->
         <div class="nota-section" id="nota-section">
             <div class="nota-header">
-                <h2 class="nota-title">Nota AishaLaundry</h2>
-                <p>Telp: +6283190164614
+                <div class="nota-brand">
+                    <h2>Aisha Laundry</h2>
+                    <p>Telp/WA: +62 831-9016-4614</p>
+                </div>
+                <div class="nota-meta">
+                    <p><strong>No</strong> <span id="nota-number">-</span></p>
+                    <p><strong>Tanggal</strong> <span id="nota-date">-</span></p>
+                </div>
             </div>
             
-            <div class="nota-detail">
+            <div class="nota-grid">
                 <div>
-                    <p><strong>No. Transaksi:</strong> <span id="nota-number">TRX-20250722-001</span></p>
-                    <p><strong>Tanggal:</strong> <span id="nota-date">22/07/2025 10:30</span></p>
+                    <p><strong>Nama Pelanggan</strong></p>
+                    <p id="nota-customer">-</p>
                 </div>
                 <div>
-                    <p><strong>Pelanggan:</strong> <span id="nota-customer">-</span></p>
-                    <p><strong>Telp:</strong> <span id="nota-phone">-</span></p>
+                    <p><strong>Kontak Telepon</strong></p>
+                    <p id="nota-phone">-</p>
                 </div>
             </div>
             
-            <div class="nota-items">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Layanan</th>
-                            <th>Detail</th>
-                            <th>Harga</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody id="nota-items-list">
-                        <!-- Item nota akan dimuat di sini -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="summary-card">
-                <div class="summary-item">
-                    <span>Subtotal</span>
-                    <span id="nota-subtotal">Rp 0</span>
-                </div>
-                <div class="summary-item total">
-                    <span>TOTAL</span>
-                    <span id="nota-total">Rp 0</span>
+            <div class="nota-table-wrapper">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item Paket Service</th>
+                                <th>Detail Atribut</th>
+                                <th>Harga Satuan</th>
+                                <th style="text-align: right;">Total Harga</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nota-items-list">
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
-            <div class="completion-info" id="nota-completion">
-                <!-- Estimasi waktu selesai untuk nota -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 20px;">
+                <div class="completion-box" id="nota-completion" style="background: var(--bg-app); color: var(--text-main); border-left-color: var(--success); width: 100%; max-width: 400px; margin-right: 15px;">
+                </div>
+                <div class="nota-summary-box">
+                    <div class="nota-summary-row">
+                        <span>Total Nilai Kotor (Subtotal)</span>
+                        <span id="nota-subtotal">Rp 0</span>
+                    </div>
+                    <div class="nota-summary-row total">
+                        <span>Total Bayar / Tagihan</span>
+                        <span id="nota-total">Rp 0</span>
+                    </div>
+                </div>
             </div>
             
             <div class="nota-footer">
-                <p>1. Baju tidak diambil lebih dari satu bulan jika rusak bukan tanggung jawab kami</p>
-                <p>2. Klaim dilayani 24 jam setelah baju diambil</p>
+                <p>1. Pakaian yang tidak diambil dalam waktu lebih dari 1 bulan di luar tanggung jawab manajemen apabila terjadi kerusakan/hilang.</p>
+                <p>2. Segala bentuk komplain atau klaim hanya dilayani maksimal 24 jam setelah status pakaian diambil.</p>
+                <p style="margin-top: 10px; font-weight: 600; color: var(--primary);">Terima kasih atas kepercayaan Anda pada Aisha Laundry!</p>
             </div>
             
-            <div class="print-btn">
+            <div class="print-actions">
                 <button class="btn btn-warning" onclick="window.print()">
-                    <i class="fas fa-print"></i> Cetak Nota
+                    <i class="fas fa-print"></i> Cetak Struk / Simpan PDF
                 </button>
             </div>
         </div>
     </div>
 
     <script>
-        // Data inisialisasi
         let services = JSON.parse(localStorage.getItem('laundryServices')) || [
-            { id: 1, name: "Cuci Setrika", price: 7000, duration: 1, type: "regular" },
-            { id: 2, name: "Cuci Kering", price: 5000, duration: 1, type: "regular" },
-            { id: 3, name: "Setrika Saja", price: 4000, duration: 1, type: "regular" },
-            { id: 4, name: "Cuci Karpet", price: 0, duration: 3, type: "special" },
-            { id: 5, name: "Cuci Boneka", price: 15000, duration: 3, type: "peritem" },
-            { id: 6, name: "Cuci Selimut", price: 25000, duration: 2, type: "peritem" }
+            { id: 1, name: "Cuci Setrika Standard", price: 7000, duration: 1, type: "regular", minWeight: 1 },
+            { id: 2, name: "Cuci Kering Efisien", price: 5000, duration: 1, type: "regular", minWeight: 1 },
+            { id: 3, name: "Setrika Saja Kilat", price: 4000, duration: 1, type: "regular", minWeight: 1 },
+            { id: 4, name: "Cuci Karpet Premium", price: 0, duration: 3, type: "special", minWeight: 0 },
+            { id: 5, name: "Cuci Boneka Satuan", price: 15000, duration: 3, type: "peritem", minWeight: 0 },
+            { id: 6, name: "Cuci Selimut King Size", price: 25000, duration: 2, type: "peritem", minWeight: 0 }
         ];
         
         let cart = [];
@@ -733,7 +777,6 @@
         let transactionCounter = localStorage.getItem('transactionCounter') || 1;
         let selectedDuration = 1;
 
-        // DOM Elements
         const servicesList = document.getElementById('services-list');
         const selectService = document.getElementById('select-service');
         const cartItems = document.getElementById('cart-items');
@@ -741,553 +784,398 @@
         const totalEl = document.getElementById('total');
         const notaSection = document.getElementById('nota-section');
         const currentDateEl = document.getElementById('current-date');
-        const specialServiceEl = document.getElementById('special-service');
-        const peritemServiceEl = document.getElementById('peritem-service');
-        const specialReasonGroupEl = document.getElementById('special-reason-group');
-        const peritemInputGroupEl = document.getElementById('peritem-input-group');
+        
+        const specialServicePanel = document.getElementById('special-service-panel');
+        const peritemServicePanel = document.getElementById('peritem-service-panel');
+        const specialReasonGroup = document.getElementById('special-reason-group');
+        const peritemInputGroup = document.getElementById('peritem-input-group');
         const serviceTypeEl = document.getElementById('service-type');
-        const weightInputGroupEl = document.getElementById('weight-input-group');
-        const priceInputGroupEl = document.getElementById('price-input-group');
+        const weightInputGroup = document.getElementById('weight-input-group');
+        const priceInputGroup = document.getElementById('price-input-group');
+        const minWeightInputGroup = document.getElementById('min-weight-input-group');
         const completionInfoEl = document.getElementById('completion-info');
         const notaCompletionEl = document.getElementById('nota-completion');
         const durationBtns = document.querySelectorAll('.duration-btn');
-        
-        // Format tanggal
+
         const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        currentDateEl.textContent = now.toLocaleDateString('id-ID', options);
-        
-        // Toggle tampilan layanan khusus saat jenis layanan berubah
+        currentDateEl.textContent = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.borderLeft = `4px solid ${type === 'success' ? 'var(--success)' : 'var(--danger)'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}" style="color:${type === 'success' ? 'var(--success)' : 'var(--danger)'}"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
         serviceTypeEl.addEventListener('change', function() {
-            if (this.value === 'special') {
-                specialServiceEl.style.display = 'block';
-                peritemServiceEl.style.display = 'none';
-                priceInputGroupEl.style.display = 'none';
-            } else if (this.value === 'peritem') {
-                specialServiceEl.style.display = 'none';
-                peritemServiceEl.style.display = 'block';
-                priceInputGroupEl.style.display = 'block';
-            } else {
-                specialServiceEl.style.display = 'none';
-                peritemServiceEl.style.display = 'none';
-                priceInputGroupEl.style.display = 'block';
-            }
+            specialServicePanel.style.display = this.value === 'special' ? 'block' : 'none';
+            peritemServicePanel.style.display = this.value === 'peritem' ? 'block' : 'none';
+            priceInputGroup.style.display = this.value === 'special' ? 'none' : 'block';
+            minWeightInputGroup.style.display = this.value === 'regular' ? 'block' : 'none';
         });
-        
-        // Toggle tampilan input berat/alasan saat layanan dipilih
+
+        // REVISED: Ketika dropdown paket dipilih, nilai input langsung menyesuaikan batas minimalnya[cite: 2]
         selectService.addEventListener('change', function() {
-            const selectedId = this.value;
-            const service = services.find(s => s.id == selectedId);
-            
+            const service = services.find(s => s.id == this.value);
             if (service) {
                 if (service.type === 'special') {
-                    weightInputGroupEl.style.display = 'none';
-                    peritemInputGroupEl.style.display = 'none';
-                    specialReasonGroupEl.style.display = 'block';
-                    document.getElementById('special-price').value = '';
+                    weightInputGroup.style.display = 'none';
+                    peritemInputGroup.style.display = 'none';
+                    specialReasonGroup.style.display = 'block';
                 } else if (service.type === 'peritem') {
-                    weightInputGroupEl.style.display = 'none';
-                    specialReasonGroupEl.style.display = 'none';
-                    peritemInputGroupEl.style.display = 'block';
-                    document.getElementById('item-quantity').value = '1';
+                    weightInputGroup.style.display = 'none';
+                    specialReasonGroup.style.display = 'none';
+                    peritemInputGroup.style.display = 'block';
                 } else {
-                    weightInputGroupEl.style.display = 'block';
-                    specialReasonGroupEl.style.display = 'none';
-                    peritemInputGroupEl.style.display = 'none';
+                    weightInputGroup.style.display = 'block';
+                    specialReasonGroup.style.display = 'none';
+                    peritemInputGroup.style.display = 'none';
+                    // Mengisi input timbangan secara otomatis dengan nilai minimal Kg yang berlaku[cite: 2]
+                    document.getElementById('item-weight').value = service.minWeight || 1;
                 }
+                updateDurationState(service.duration);
             }
         });
-        
-        // Event listener untuk tombol durasi
+
         durationBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 durationBtns.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 selectedDuration = parseInt(this.dataset.days);
+                calculateCompletionDate();
             });
         });
-        
-        // Fungsi untuk menyimpan layanan ke localStorage
-        function saveServices() {
-            localStorage.setItem('laundryServices', JSON.stringify(services));
+
+        function updateDurationState(days) {
+            selectedDuration = days;
+            durationBtns.forEach(btn => {
+                if (parseInt(btn.dataset.days) === days) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            calculateCompletionDate();
         }
-        
-        // Fungsi untuk merender daftar layanan
+
         function renderServices() {
             servicesList.innerHTML = '';
-            selectService.innerHTML = '<option value="">-- Pilih Layanan --</option>';
+            selectService.innerHTML = '<option value="">-- Silahkan Pilih Jenis Layanan --</option>';
             
             services.forEach(service => {
-                // Render untuk tabel layanan
                 const row = document.createElement('tr');
-                let priceDisplay;
-                
+                let priceDisplay = `Rp ${service.price.toLocaleString('id-ID')} /kg`;
+                let badgeClass = 'badge-regular';
+                let typeLabel = 'Biasa';
+
                 if (service.type === 'special') {
-                    priceDisplay = '<span class="custom-price-info">Harga diinput saat transaksi</span>';
+                    priceDisplay = '<span style="color:var(--warning);font-weight:600;">Custom</span>';
+                    badgeClass = 'badge-special';
+                    typeLabel = 'Khusus';
                 } else if (service.type === 'peritem') {
-                    priceDisplay = `Rp ${service.price.toLocaleString('id-ID')} per item`;
-                } else {
-                    priceDisplay = `Rp ${service.price.toLocaleString('id-ID')} per kg`;
+                    priceDisplay = `Rp ${service.price.toLocaleString('id-ID')} /pcs`;
+                    badgeClass = 'badge-peritem';
+                    typeLabel = 'Satuan';
                 }
-                
+
+                let minWeightText = (service.type === 'regular' && service.minWeight > 1) ? `<div style="font-size: 0.75rem; color: var(--danger); font-weight: 500;">Min. ${service.minWeight} Kg</div>` : '';
+
                 row.innerHTML = `
-                    <td>${service.name}</td>
-                    <td>${priceDisplay}</td>
-                    <td>${service.duration} hari</td>
-                    <td>${service.type === 'special' ? 'Khusus' : service.type === 'peritem' ? 'Per Item' : 'Regular'}</td>
+                    <td>
+                        <div style="font-weight:600;">${service.name}</div>
+                        <span class="badge ${badgeClass}">${typeLabel}</span>
+                    </td>
+                    <td>
+                        <div>${priceDisplay}</div>
+                        ${minWeightText}
+                    </td>
+                    <td><i class="far fa-clock" style="color:var(--text-muted)"></i> ${service.duration} Hari</td>
                     <td class="action-cell">
-                        <button class="btn btn-warning btn-sm edit-btn" data-id="${service.id}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-danger btn-sm delete-btn" data-id="${service.id}">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="editService(${service.id})" title="Edit Paket"><i class="fas fa-edit" style="color:var(--warning)"></i></button>
+                        <button class="btn btn-secondary btn-sm" onclick="deleteService(${service.id})" title="Hapus Paket"><i class="fas fa-trash-alt" style="color:var(--danger)"></i></button>
                     </td>
                 `;
                 servicesList.appendChild(row);
-                
-                // Render untuk dropdown layanan
+
                 const option = document.createElement('option');
                 option.value = service.id;
-                
-                let typeSuffix = '';
-                if (service.type === 'special') {
-                    typeSuffix = ' (Khusus)';
-                } else if (service.type === 'peritem') {
-                    typeSuffix = ' (Per Item)';
-                }
-                
-                option.textContent = `${service.name}${typeSuffix}`;
+                let optMinText = (service.type === 'regular' && service.minWeight > 1) ? ` (Min ${service.minWeight}kg)` : '';
+                option.textContent = `${service.name}${optMinText} [${typeLabel}]`;
                 selectService.appendChild(option);
             });
-            
-            // Tambahkan event listener untuk tombol edit dan hapus
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => editService(btn.dataset.id));
-            });
-            
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => deleteService(btn.dataset.id));
-            });
+            localStorage.setItem('laundryServices', JSON.stringify(services));
         }
-        
-        // Fungsi untuk menambah layanan
-        function addService() {
+
+        document.getElementById('save-service-btn').addEventListener('click', function() {
             const name = document.getElementById('service-name').value.trim();
             const duration = parseInt(document.getElementById('service-duration').value);
-            const type = document.getElementById('service-type').value;
+            const type = serviceTypeEl.value;
+            let price = type === 'special' ? 0 : parseInt(document.getElementById('service-price').value);
             
-            // Harga diperlukan untuk layanan regular dan per item
-            let price = 0;
-            if (type === 'regular' || type === 'peritem') {
-                price = parseInt(document.getElementById('service-price').value);
-            }
-            
-            if (!name || isNaN(duration)) {
-                alert('Harap isi semua field dengan benar!');
+            let minWeight = type === 'regular' ? parseFloat(document.getElementById('service-min-weight').value) : 0;
+            if (type === 'regular' && (isNaN(minWeight) || minWeight <= 0)) minWeight = 1;
+
+            if (!name || isNaN(duration) || duration <= 0) {
+                showToast('Harap lengkapi isian data field parameter dengan benar!', 'danger');
                 return;
             }
-            
-            if ((type === 'regular' || type === 'peritem') && (isNaN(price) || price <= 0)) {
-                alert('Harap masukkan harga yang valid!');
+            if (type !== 'special' && (isNaN(price) || price <= 0)) {
+                showToast('Masukkan patokan nominal harga komersial paket!', 'danger');
                 return;
             }
-            
+
             if (editingServiceId) {
-                // Edit layanan yang ada
-                const serviceIndex = services.findIndex(s => s.id === editingServiceId);
-                if (serviceIndex !== -1) {
-                    services[serviceIndex] = { 
-                        ...services[serviceIndex], 
-                        name, 
-                        price,
-                        duration,
-                        type
-                    };
-                }
+                const idx = services.findIndex(s => s.id === editingServiceId);
+                if (idx !== -1) services[idx] = { id: editingServiceId, name, price, duration, type, minWeight };
                 editingServiceId = null;
-                document.getElementById('save-service-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Layanan';
+                this.innerHTML = '<i class="fas fa-save"></i> Simpan Modul Layanan';
+                showToast('Perubahan master data paket berhasil diperbarui.');
             } else {
-                // Tambah layanan baru
                 const newId = services.length > 0 ? Math.max(...services.map(s => s.id)) + 1 : 1;
-                services.push({ id: newId, name, price, duration, type });
+                services.push({ id: newId, name, price, duration, type, minWeight });
+                showToast('Koleksi variasi paket baru berhasil ditambahkan.');
             }
-            
-            saveServices();
+
             renderServices();
             resetServiceForm();
-        }
-        
-        // Fungsi untuk mengedit layanan
+        });
+
         function editService(id) {
-            const service = services.find(s => s.id === parseInt(id));
+            const service = services.find(s => s.id === id);
             if (service) {
+                editingServiceId = service.id;
                 document.getElementById('service-name').value = service.name;
+                serviceTypeEl.value = service.type;
                 document.getElementById('service-price').value = service.price;
                 document.getElementById('service-duration').value = service.duration;
-                document.getElementById('service-type').value = service.type;
                 
-                // Tampilkan metode khusus jika jenis khusus
-                if (service.type === 'special') {
-                    specialServiceEl.style.display = 'block';
-                    peritemServiceEl.style.display = 'none';
-                    priceInputGroupEl.style.display = 'none';
-                } else if (service.type === 'peritem') {
-                    specialServiceEl.style.display = 'none';
-                    peritemServiceEl.style.display = 'block';
-                    priceInputGroupEl.style.display = 'block';
-                } else {
-                    specialServiceEl.style.display = 'none';
-                    peritemServiceEl.style.display = 'none';
-                    priceInputGroupEl.style.display = 'block';
-                }
+                document.getElementById('service-min-weight').value = service.type === 'regular' ? (service.minWeight || 1) : 1;
                 
-                editingServiceId = service.id;
-                document.getElementById('save-service-btn').innerHTML = '<i class="fas fa-save"></i> Update Layanan';
+                serviceTypeEl.dispatchEvent(new Event('change'));
+                document.getElementById('save-service-btn').innerHTML = '<i class="fas fa-sync-alt"></i> Perbarui Master Paket';
+                document.getElementById('service-name').focus();
             }
         }
-        
-        // Fungsi untuk menghapus layanan
+
         function deleteService(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
-                services = services.filter(s => s.id !== parseInt(id));
-                saveServices();
+            if (confirm('Konfirmasi penghapusan data paket item terpilih dari memory?')) {
+                services = services.filter(s => s.id !== id);
                 renderServices();
+                showToast('Item paket telah berhasil dibersihkan.', 'success');
             }
         }
-        
-        // Fungsi untuk mereset form layanan
+
         function resetServiceForm() {
             document.getElementById('service-name').value = '';
             document.getElementById('service-price').value = '';
             document.getElementById('service-duration').value = '1';
-            document.getElementById('service-type').value = 'regular';
-            specialServiceEl.style.display = 'none';
-            peritemServiceEl.style.display = 'none';
-            priceInputGroupEl.style.display = 'block';
+            document.getElementById('service-min-weight').value = '1';
+            serviceTypeEl.value = 'regular';
+            serviceTypeEl.dispatchEvent(new Event('change'));
             editingServiceId = null;
-            document.getElementById('save-service-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Layanan';
+            document.getElementById('save-service-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Modul Layanan';
         }
-        
-        // Fungsi untuk menambah item ke keranjang
-        function addToCart() {
+
+        document.getElementById('add-to-cart').addEventListener('click', function() {
             const serviceId = parseInt(selectService.value);
             const customerName = document.getElementById('customer-name').value.trim();
-            
-            if (!serviceId) {
-                alert('Harap pilih layanan!');
-                return;
-            }
-            
+
             if (!customerName) {
-                alert('Harap masukkan nama pelanggan!');
+                showToast('Mohon isi nama identitas pelanggan transaksi dahulu!', 'danger');
                 return;
             }
-            
+            if (!serviceId) {
+                showToast('Silahkan pilih paket layanan baju kasir!', 'danger');
+                return;
+            }
+
             const service = services.find(s => s.id === serviceId);
             if (!service) return;
-            
-            let weight = 0;
-            let quantity = 1;
+
+            let weight = 1;
             let reason = '';
-            let customPrice = 0;
-            
+
             if (service.type === 'special') {
-                // Untuk layanan khusus, ambil harga dari input khusus
-                customPrice = parseFloat(document.getElementById('special-price').value);
+                const customPrice = parseFloat(document.getElementById('special-price').value);
+                reason = document.getElementById('special-reason').value.trim() || 'Tanpa catatan khusus.';
                 if (isNaN(customPrice) || customPrice <= 0) {
-                    alert('Harap masukkan harga khusus yang valid!');
+                    showToast('Harap input harga khusus kesepakatan!', 'danger');
                     return;
                 }
-                weight = 1;
-                reason = document.getElementById('special-reason').value.trim() || 'Tanpa keterangan khusus';
-                
-                // Buat salinan service dengan harga custom
-                const customService = { ...service, price: customPrice };
-                
-                // Tambah item baru dengan harga khusus
-                cart.push({
-                    service: customService,
-                    weight,
-                    reason,
-                    customPrice,
-                    duration: selectedDuration
-                });
+                const modifiedService = { ...service, price: customPrice };
+                cart.push({ service: modifiedService, weight: 1, reason, duration: selectedDuration });
             } else if (service.type === 'peritem') {
-                // Untuk layanan per item, ambil jumlah item
-                quantity = parseInt(document.getElementById('item-quantity').value);
-                if (isNaN(quantity) || quantity <= 0) {
-                    alert('Harap masukkan jumlah item yang valid!');
+                const qty = parseInt(document.getElementById('item-quantity').value);
+                if (isNaN(qty) || qty <= 0) {
+                    showToast('Masukkan kuantitas jumlah pcs unit valid!', 'danger');
                     return;
                 }
-                weight = quantity;
-                
-                // Tambah item baru
-                cart.push({
-                    service,
-                    weight,
-                    reason: '',
-                    duration: selectedDuration
-                });
+                cart.push({ service, weight: qty, reason: '', duration: selectedDuration });
             } else {
-                // Untuk layanan regular, gunakan berat
-                weight = parseFloat(document.getElementById('item-weight').value);
-                if (isNaN(weight) || weight <= 0) {
-                    alert('Harap masukkan berat yang valid!');
+                const w = parseFloat(document.getElementById('item-weight').value);
+                if (isNaN(w) || w <= 0) {
+                    showToast('Nilai indikator berat timbangan tidak boleh kosong!', 'danger');
                     return;
                 }
-                
-                // Tambah item baru
-                cart.push({
-                    service,
-                    weight,
-                    reason: '',
-                    duration: selectedDuration
-                });
+                cart.push({ service, weight: w, reason: '', duration: selectedDuration });
             }
-            
+
+            showToast('Item dimasukkan ke list keranjang belanja.');
             renderCart();
-        }
-        
-        // Fungsi untuk merender keranjang
+        });
+
         function renderCart() {
             cartItems.innerHTML = '';
-            
             if (cart.length === 0) {
-                cartItems.innerHTML = '<p class="empty-cart">Keranjang kosong</p>';
-                updateSummary();
+                cartItems.innerHTML = '<p class="empty-cart"><i class="fas fa-shopping-basket" style="display:block;font-size:1.5rem;margin-bottom:8px;"></i>Belum ada item pesanan.</p>';
+                subtotalEl.textContent = 'Rp 0';
+                totalEl.textContent = 'Rp 0';
+                completionInfoEl.textContent = 'Estimasi waktu penyelesaian item kosong.';
                 return;
             }
-            
-            cart.forEach((item, index) => {
-                const cartItem = document.createElement('div');
-                let itemClass = 'cart-item';
-                
-                if (item.service.type === 'special') {
-                    itemClass += ' special-item';
-                } else if (item.service.type === 'peritem') {
-                    itemClass += ' peritem-item';
+
+            let subtotal = 0;
+            cart.forEach((item, idx) => {
+                let effectiveWeight = item.weight;
+                let hasMinWeightApplied = false;
+
+                if (item.service.type === 'regular' && item.service.minWeight > 0 && item.weight < item.service.minWeight) {
+                    effectiveWeight = item.service.minWeight;
+                    hasMinWeightApplied = true;
                 }
+
+                const lineTotal = Math.round(item.service.price * effectiveWeight);
+                subtotal += lineTotal;
+
+                const element = document.createElement('div');
+                element.className = 'cart-item';
                 
-                cartItem.className = itemClass;
+                let detailSubtitle = `Rp ${item.service.price.toLocaleString('id-ID')} × ${item.weight} Kg`;
+                if (hasMinWeightApplied) detailSubtitle += ` <span style="color:var(--danger); font-weight:600;">(Min. ${item.service.minWeight} Kg)</span>`;
                 
-                let detailsHTML = `
-                    <div class="cart-item-details">
+                if (item.service.type === 'special') detailSubtitle = `Harga Khusus: Rp ${lineTotal.toLocaleString('id-ID')} (${item.reason})`;
+                if (item.service.type === 'peritem') detailSubtitle = `Rp ${item.service.price.toLocaleString('id-ID')} × ${item.weight} Pcs`;
+
+                element.innerHTML = `
+                    <div class="cart-item-info">
                         <h4>${item.service.name}</h4>
-                `;
-                
-                if (item.service.type === 'special') {
-                    detailsHTML += `
-                        <p><i class="fas fa-star"></i> Custom</p>
-                        <p>Rp ${item.service.price.toLocaleString('id-ID')} (custom)</p>
-                        <p class="special-info">Keterangan: ${item.reason}</p>
-                    `;
-                } else if (item.service.type === 'peritem') {
-                    detailsHTML += `
-                        <p>Rp ${item.service.price.toLocaleString('id-ID')} × ${item.weight} item</p>
-                        <p class="peritem-info">Layanan per item</p>
-                    `;
-                } else {
-                    detailsHTML += `
-                        <p>Rp ${item.service.price.toLocaleString('id-ID')} × ${item.weight} kg</p>
-                    `;
-                }
-                
-                detailsHTML += `</div>`;
-                
-                let actionsHTML = `
-                    <div class="cart-item-actions">
-                        <button class="btn btn-danger btn-sm remove-btn" data-index="${index}">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <p>${detailSubtitle}</p>
+                        <span class="duration-badge"><i class="far fa-clock"></i> ${item.duration} Hari Kerja</span>
+                    </div>
+                    <div class="cart-item-meta">
+                        <strong style="font-size:0.95rem;">Rp ${lineTotal.toLocaleString('id-ID')}</strong>
+                        <button class="btn btn-danger btn-sm" onclick="removeFromCart(${idx})" style="padding:6px 9px;"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 `;
-                
-                // Tambahkan tag durasi
-                const durationTag = `<div class="duration-tag">${item.duration} Hari</div>`;
-                
-                cartItem.innerHTML = durationTag + detailsHTML + actionsHTML;
-                cartItems.appendChild(cartItem);
+                cartItems.appendChild(element);
             });
-            
-            // Tambahkan event listener untuk tombol hapus
-            document.querySelectorAll('.remove-btn').forEach(btn => {
-                btn.addEventListener('click', () => removeFromCart(btn.dataset.index));
-            });
-            
-            updateSummary();
-        }
-        
-        // Fungsi untuk menghitung estimasi selesai
-        function calculateCompletionDate() {
-            if (cart.length === 0) return;
-            
-            // Temukan durasi terpanjang di keranjang
-            const maxDuration = Math.max(...cart.map(item => item.duration));
-            
-            // Hitung tanggal selesai
-            const today = new Date();
-            const completionDate = new Date(today);
-            completionDate.setDate(completionDate.getDate() + maxDuration);
-            
-            // Format tanggal
-            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-            const formattedDate = completionDate.toLocaleDateString('id-ID', options);
-            
-            // Tampilkan informasi
-            completionInfoEl.innerHTML = `<strong>Estimasi Selesai:</strong> ${formattedDate}`;
-            
-            return formattedDate;
-        }
-        
-        // Fungsi untuk menghapus item dari keranjang
-        function removeFromCart(index) {
-            if (confirm('Apakah Anda yakin ingin menghapus item ini?')) {
-                cart.splice(index, 1);
-                renderCart();
-            }
-        }
-        
-        // Fungsi untuk memperbarui ringkasan pembayaran
-        function updateSummary() {
-            const subtotal = cart.reduce((sum, item) => {
-                return sum + (item.service.price * item.weight);
-            }, 0);
-            
-            const total = subtotal;
-            
+
             subtotalEl.textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
-            totalEl.textContent = `Rp ${total.toLocaleString('id-ID')}`;
-            
-            // Perbarui estimasi waktu selesai
+            totalEl.textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
             calculateCompletionDate();
         }
-        
-        // Fungsi untuk mereset transaksi
-        function resetTransaction() {
-            if (cart.length === 0) return;
-            
-            if (confirm('Apakah Anda yakin ingin mereset transaksi?')) {
-                cart = [];
-                document.getElementById('customer-name').value = '';
-                document.getElementById('phone-number').value = '';
-                document.getElementById('item-weight').value = 1;
-                document.getElementById('item-quantity').value = 1;
-                document.getElementById('special-reason').value = '';
-                document.getElementById('special-price').value = '';
-                specialReasonGroupEl.style.display = 'none';
-                peritemInputGroupEl.style.display = 'none';
-                weightInputGroupEl.style.display = 'block';
-                renderCart();
-                notaSection.style.display = 'none';
-            }
+
+        function removeFromCart(idx) {
+            cart.splice(idx, 1);
+            showToast('Item dikeluarkan dari keranjang belanja.', 'danger');
+            renderCart();
         }
-        
-        // Fungsi untuk membuat nota
-        function createNota() {
+
+        function calculateCompletionDate() {
+            if (cart.length === 0) return '';
+            const maxDuration = Math.max(...cart.map(i => i.duration));
+            const dateEnd = new Date();
+            dateEnd.setDate(dateEnd.getDate() + maxDuration);
+            const outputString = dateEnd.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            
+            completionInfoEl.innerHTML = `<i class="fas fa-calendar-check"></i> Estimasi Selesai:<br><strong>${outputString}</strong>`;
+            return outputString;
+        }
+
+        function resetTransaction() {
+            if (cart.length > 0 && !confirm('Bersihkan isi keranjang belanja dan batalkan pendaftaran data kasir saat ini?')) return;
+            cart = [];
+            document.getElementById('customer-name').value = '';
+            document.getElementById('phone-number').value = '';
+            document.getElementById('item-weight').value = 1;
+            document.getElementById('item-quantity').value = 1;
+            document.getElementById('special-price').value = '';
+            document.getElementById('special-reason').value = '';
+            selectService.value = '';
+            selectService.dispatchEvent(new Event('change'));
+            notaSection.style.display = 'none';
+            renderCart();
+        }
+
+        document.getElementById('checkout-btn').addEventListener('click', function() {
             if (cart.length === 0) {
-                alert('Keranjang masih kosong!');
+                showToast('Isi keranjang belanja kosong, transaksi gagal diproses!', 'danger');
                 return;
             }
+
+            const cName = document.getElementById('customer-name').value.trim();
+            const cPhone = document.getElementById('phone-number').value.trim() || '-';
             
-            const customerName = document.getElementById('customer-name').value.trim();
-            const phoneNumber = document.getElementById('phone-number').value.trim();
-            
-            if (!customerName) {
-                alert('Harap masukkan nama pelanggan!');
-                return;
-            }
-            
-            // Generate transaction number
-            const now = new Date();
-            const dateString = now.toISOString().slice(0, 10).replace(/-/g, '');
-            const transactionNumber = `TRX-${dateString}-${String(transactionCounter).padStart(3, '0')}`;
-            
-            // Update nota details
-            document.getElementById('nota-number').textContent = transactionNumber;
-            document.getElementById('nota-date').textContent = now.toLocaleString('id-ID');
-            document.getElementById('nota-customer').textContent = customerName;
-            document.getElementById('nota-phone').textContent = phoneNumber || '-';
-            
-            // Render items in nota
-            const notaItemsList = document.getElementById('nota-items-list');
-            notaItemsList.innerHTML = '';
-            
+            const today = new Date();
+            const stampSegment = today.toISOString().slice(0,10).replace(/-/g,'');
+            const generatedTrxCode = `TRX-${stampSegment}-${String(transactionCounter).padStart(4, '0')}`;
+
+            document.getElementById('nota-number').textContent = generatedTrxCode;
+            document.getElementById('nota-date').textContent = today.toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+            document.getElementById('nota-customer').textContent = cName;
+            document.getElementById('nota-phone').textContent = cPhone;
+
+            const targetTableList = document.getElementById('nota-items-list');
+            targetTableList.innerHTML = '';
+
+            let calculatedTotal = 0;
             cart.forEach(item => {
-                const itemTotal = item.service.price * item.weight;
-                
-                const row = document.createElement('tr');
-                
-                if (item.service.type === 'special') {
-                    row.innerHTML = `
-                        <td>${item.service.name}</td>
-                        <td>
-                            <div><strong>Custom</strong></div>
-                            <div><small>Keterangan: ${item.reason}</small></div>
-                            <div><small>Durasi: ${item.duration} hari</small></div>
-                        </td>
-                        <td>Rp ${item.service.price.toLocaleString('id-ID')}</td>
-                        <td>Rp ${itemTotal.toLocaleString('id-ID')}</td>
-                    `;
-                } else if (item.service.type === 'peritem') {
-                    row.innerHTML = `
-                        <td>${item.service.name}</td>
-                        <td>
-                            <div>${item.weight} item × Rp ${item.service.price.toLocaleString('id-ID')}</div>
-                            <div><small>Durasi: ${item.duration} hari</small></div>
-                        </td>
-                        <td>Rp ${item.service.price.toLocaleString('id-ID')}/item</td>
-                        <td>Rp ${itemTotal.toLocaleString('id-ID')}</td>
-                    `;
-                } else {
-                    row.innerHTML = `
-                        <td>${item.service.name}</td>
-                        <td>
-                            <div>${item.weight} kg × Rp ${item.service.price.toLocaleString('id-ID')}</div>
-                            <div><small>Durasi: ${item.duration} hari</small></div>
-                        </td>
-                        <td>Rp ${item.service.price.toLocaleString('id-ID')}/kg</td>
-                        <td>Rp ${itemTotal.toLocaleString('id-ID')}</td>
-                    `;
+                let effectiveWeight = item.weight;
+                if (item.service.type === 'regular' && item.service.minWeight > 0 && item.weight < item.service.minWeight) {
+                    effectiveWeight = item.service.minWeight;
                 }
+
+                const subCost = Math.round(item.service.price * effectiveWeight);
+                calculatedTotal += subCost;
+
+                const tr = document.createElement('tr');
                 
-                notaItemsList.appendChild(row);
+                // REVISED: Detail atribut di nota dibuat minimalis (hanya total kg/item dan hari)[cite: 2]
+                let rowMetas = "";
+                if (item.service.type === 'regular') {
+                    rowMetas = `${effectiveWeight} Kg`;
+                } else if (item.service.type === 'peritem') {
+                    rowMetas = `${item.weight} Pcs`;
+                } else {
+                    rowMetas = `1 Paket`;
+                }
+
+                tr.innerHTML = `
+                    <td><strong>${item.service.name}</strong></td>
+                    <td>${rowMetas} [${item.duration} Hari]</td>
+                    <td>Rp ${item.service.price.toLocaleString('id-ID')}</td>
+                    <td style="text-align:right; font-weight:600;">Rp ${subCost.toLocaleString('id-ID')}</td>
+                `;
+                targetTableList.appendChild(tr);
             });
+
+            document.getElementById('nota-subtotal').textContent = `Rp ${calculatedTotal.toLocaleString('id-ID')}`;
+            document.getElementById('nota-total').textContent = `Rp ${calculatedTotal.toLocaleString('id-ID')}`;
             
-            // Update summary in nota
-            const subtotal = cart.reduce((sum, item) => {
-                return sum + (item.service.price * item.weight);
-            }, 0);
-            
-            const total = subtotal;
-            
-            document.getElementById('nota-subtotal').textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
-            document.getElementById('nota-total').textContent = `Rp ${total.toLocaleString('id-ID')}`;
-            
-            // Tambahkan estimasi waktu selesai di nota
-            const completionDate = calculateCompletionDate();
-            if (completionDate) {
-                notaCompletionEl.innerHTML = `<strong>Estimasi Selesai:</strong> ${completionDate}`;
-            }
-            
-            // Show nota section
+            const dynamicCompletionDate = calculateCompletionDate();
+            notaCompletionEl.innerHTML = `<i class="fas fa-history"></i> Paket Estimasi Pengambilan Selesai:<br><strong>${dynamicCompletionDate}</strong>`;
+
             notaSection.style.display = 'block';
-            
-            // Scroll ke bagian nota
             notaSection.scrollIntoView({ behavior: 'smooth' });
-            
-            // Increment transaction counter
+
             transactionCounter++;
             localStorage.setItem('transactionCounter', transactionCounter);
-        }
-        
-        // Event Listeners
-        document.getElementById('save-service-btn').addEventListener('click', addService);
-        document.getElementById('add-to-cart').addEventListener('click', addToCart);
-        document.getElementById('reset-transaction').addEventListener('click', resetTransaction);
-        document.getElementById('checkout-btn').addEventListener('click', createNota);
-        
-        // Inisialisasi
+            showToast('Dokumen nota struk belanja berhasil diproduksi.');
+        });
+
         renderServices();
         renderCart();
     </script>
