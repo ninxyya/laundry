@@ -1,0 +1,87 @@
+{
+  "services": [
+    {
+      "id": 1,
+      "name": "Cuci Saja",
+      "type": "regular",
+      "price": 4000,
+      "minWeight": 2
+    },
+    {
+      "id": 2,
+      "name": "Cuci + Setrika",
+      "type": "regular",
+      "price": 5000,
+      "minWeight": 2
+    },
+    {
+      "id": 3,
+      "name": "Setrika",
+      "type": "regular",
+      "price": 4000,
+      "minWeight": 2
+    },
+    {
+      "id": 4,
+      "name": "Cuci Karpet",
+      "type": "kustom",
+      "price": 0,
+      "minWeight": 0
+    },
+    {
+      "id": 5,
+      "name": "Sepatu",
+      "type": "peritem",
+      "price": 20000,
+      "minWeight": 0
+    }
+  ],
+  "transactions": [
+    {
+      "id": "TRX-20260718-0001",
+      "date": "18/7/2026",
+      "dateTime": "18/7/2026, 07.52.01",
+      "customer": "nicc",
+      "phone": "0285347535858347",
+      "items": [
+        {
+          "serviceId": 2,
+          "name": "Cuci + Setrika",
+          "type": "regular",
+          "quantity": 1,
+          "billedQuantity": 2,
+          "price": 5000,
+          "reason": "",
+          "duration": 3,
+          "subtotal": 10000
+        }
+      ],
+      "total": 10000,
+      "completionDate": "Selasa, 21 Juli 2026",
+      "status": "Selesai"
+    }
+  ],
+  "loginHistory": [
+    {
+      "user": "ninxy",
+      "time": "15/7/2026 Pukul 19.59.54"
+    },
+    {
+      "user": "ninxy",
+      "time": "15/7/2026 Pukul 19.59.54"
+    },
+    {
+      "user": "ninxy",
+      "time": "17/7/2026 Pukul 21.48.16"
+    },
+    {
+      "user": "ninxy",
+      "time": "18/7/2026 Pukul 07.47.59"
+    },
+    {
+      "user": "ninxy",
+      "time": "18/7/2026 Pukul 08.36.51"
+    }
+  ],
+  "transactionCounter": 2
+}
