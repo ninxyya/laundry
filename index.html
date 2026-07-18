@@ -270,39 +270,48 @@
         </div>
     </div>
 
-    <script>
-        if (window.location.protocol === 'file:') {
-            window.location.replace('http://localhost:3000/');
+   <script>
+    // Deteksi otomatis apakah web berjalan di local komputer atau di cloud Vercel
+    const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (window.location.protocol === 'file:' && IS_LOCAL) {
+        window.location.replace('http://localhost:3000/');
+    }
+
+    let services = [];
+    let cart = [];
+    let selectedDuration = 1;
+    
+    // URL Base otomatis menyesuaikan lingkungan host
+    const API_BASE_URL = IS_LOCAL ? 'http://127.0.0.1:3000' : '';
+
+    const selectService = document.getElementById('service-select');
+    const cartItems = document.getElementById('cart-items');
+    const subtotalEl = document.getElementById('subtotal-el');
+    const totalEl = document.getElementById('total-el');
+    const completionInfoEl = document.getElementById('completion-info-el');
+    const notaSection = document.getElementById('nota-section');
+
+    async function apiRequest(url, options = {}) {
+        let response;
+        try {
+            response = await fetch(`${API_BASE_URL}${url}`, {
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+                ...options
+            });
+        } catch (err) {
+            // Perbaikan: Pesan error dinamis sesuai tempat web dibuka
+            const errorMsg = IS_LOCAL 
+                ? 'Server lokal tidak terhubung. Pastikan file server.js sudah dijalankan di terminal.' 
+                : 'Gagal terhubung ke server cloud. Mohon cek koneksi internet Anda.';
+            throw new Error(errorMsg);
         }
 
-        let services = [];
-        let cart = [];
-        let selectedDuration = 1;
-        const API_BASE_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:3000' : '';
-
-        const selectService = document.getElementById('service-select');
-        const cartItems = document.getElementById('cart-items');
-        const subtotalEl = document.getElementById('subtotal-el');
-        const totalEl = document.getElementById('total-el');
-        const completionInfoEl = document.getElementById('completion-info-el');
-        const notaSection = document.getElementById('nota-section');
-
-        async function apiRequest(url, options = {}) {
-            let response;
-            try {
-                response = await fetch(`${API_BASE_URL}${url}`, {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-                    ...options
-                });
-            } catch {
-                throw new Error('Server tidak terhubung. Buka lewat http://localhost:3000/ dan pastikan server.js berjalan.');
-            }
-
-            const payload = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(payload.message || 'Request gagal.');
-            return payload;
-        }
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.message || 'Terjadi kesalahan pada request.');
+        return payload;
+    }
 
         function formatCurrency(value) {
             return `Rp ${(Number(value) || 0).toLocaleString('id-ID')}`;
