@@ -7,8 +7,13 @@ const ROOT = path.join(__dirname, '..');
 const DATA_DIR = path.join(ROOT, 'data');
 const STORE_FILE = path.join(DATA_DIR, 'store.json');
 
+// =========================================================================
+// PENGATURAN KREDENSIAL LOGIN ADMIN
+// =========================================================================
 const CUSTOM_USER = "ninxy";
 const CUSTOM_PASS = "123123";
+const SECRET_KEY = "aisha_laundry_secure_token_secret_2026";
+// =========================================================================
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -21,10 +26,40 @@ const defaultServices = [
   { id: 4, name: 'Dry Clean Premium', type: 'regular', price: 15000, minWeight: 3 }
 ];
 
-// Memory caching untuk serverless function scope
-const sessions = new Map();
+// Memory tracking untuk limit & login attempts (bersifat jangka pendek di serverless)
 const loginAttempts = new Map();
 const transactionLimits = new Map();
+
+// =========================================================================
+// FUNGSI STATELESS TOKEN (Pengganti Map Sesi yang Hilang di Vercel)
+// =========================================================================
+function generateToken(username) {
+  const expiresAt = Date.now() + SESSION_TTL_MS;
+  const payload = JSON.stringify({ username, role: 'admin', expiresAt });
+  const encodedPayload = Buffer.from(payload).toString('base64url');
+  const signature = crypto.createHmac('sha256', SECRET_KEY).update(encodedPayload).digest('base64url');
+  return `${encodedPayload}.${signature}`;
+}
+
+function verifyToken(token) {
+  if (!token) return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  
+  const [encodedPayload, signature] = parts;
+  const expectedSignature = crypto.createHmac('sha256', SECRET_KEY).update(encodedPayload).digest('base64url');
+  
+  if (signature !== expectedSignature) return null; // Token palsu/dimanipulasi
+  
+  try {
+    const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
+    if (payload.expiresAt <= Date.now()) return null; // Token kedaluwarsa
+    return payload;
+  } catch {
+    return null;
+  }
+}
+// =========================================================================
 
 function ensureStore() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -80,17 +115,8 @@ function getClientKey(req) {
 }
 
 function getSession(req) {
-  const sid = parseCookies(req).sid;
-  if (!sid) return null;
-
-  const session = sessions.get(sid);
-  if (!session || session.expiresAt <= Date.now()) {
-    sessions.delete(sid);
-    return null;
-  }
-
-  session.expiresAt = Date.now() + SESSION_TTL_MS;
-  return { id: sid, ...session };
+  const sid = parseCookies(req).sid; // Cookie sid sekarang berisi encrypted token
+  return verifyToken(sid);
 }
 
 function requireAdmin(req, res) {
@@ -120,9 +146,9 @@ function readBody(req) {
   });
 }
 
-function normalizeString(value, maxLength) {
-  return String(value || '').trim().slice(0, maxLength);
-}
+function normalizeString(value, maxLength) { return String(value || '').trim().slice(0, maxLength); }
+function formatIdDate(date = new Date()) { return date.toLocaleDateString('id-ID'); }
+function formatIdDateTime(date = new Date()) { return `${date.toLocaleDateString('id-ID')} Pukul ${date.toLocaleTimeString('id-ID')}`; }
 
 function sanitizeService(input, currentId = null) {
   const name = normalizeString(input.name, 120);
@@ -138,44 +164,23 @@ function sanitizeService(input, currentId = null) {
   return { id: currentId, name, type, price: Math.round(price), minWeight };
 }
 
-function formatIdDate(date = new Date()) {
-  return date.toLocaleDateString('id-ID');
-}
-
-function formatIdDateTime(date = new Date()) {
-  return `${date.toLocaleDateString('id-ID')} Pukul ${date.toLocaleTimeString('id-ID')}`;
-}
-
-function createSession(username) {
-  const sid = crypto.randomBytes(32).toString('hex');
-  sessions.set(sid, { username, role: 'admin', createdAt: Date.now(), expiresAt: Date.now() + SESSION_TTL_MS });
-  return sid;
-}
-
-function clearSession(req) {
-  const sid = parseCookies(req).sid;
-  if (sid) sessions.delete(sid);
-}
-
-function cookieHeader(sid, req) {
-  return `sid=${encodeURIComponent(sid)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`;
+function cookieHeader(token) {
+  return `sid=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`;
 }
 
 function clearCookieHeader() {
   return 'sid=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0';
 }
 
-// MAIN VERCEL SERVERLESS EXPORT HANDLER
+// MAIN HANDLER FOR VERCEL
 module.exports = async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   
-  // SOLUSI: Normalisasi pathname dengan menghapus prefix '/api' agar routing Vercel akurat
   let cleanPath = parsedUrl.pathname.replace(/^\/api/, '');
   if (cleanPath.length > 1 && cleanPath.endsWith('/')) {
     cleanPath = cleanPath.slice(0, -1);
   }
 
-  // Pengaturan CORS untuk komunikasi antar domain / port
   const origin = req.headers.origin;
   res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -205,21 +210,22 @@ module.exports = async (req, res) => {
         const nextCount = attempt.count + 1;
         const lockedUntil = nextCount >= MAX_LOGIN_ATTEMPTS ? Date.now() + LOGIN_LOCK_MS : 0;
         loginAttempts.set(key, { count: nextCount, lockedUntil });
-        return sendJson(res, 401, { error: 'INVALID_LOGIN', message: lockedUntil ? 'Akses dikunci sementara karena terlalu banyak percobaan gagal.' : `Gagal! Sisa percobaan: ${MAX_LOGIN_ATTEMPTS - nextCount}.` });
+        return sendJson(res, 401, { error: 'INVALID_LOGIN', message: lockedUntil ? 'Akses dikunci sementara.' : `Gagal! Sisa percobaan: ${MAX_LOGIN_ATTEMPTS - nextCount}.` });
       }
 
       loginAttempts.delete(key);
-      const sid = createSession(username);
+      const token = generateToken(username); // Membuat stateless token baru
+      
       const store = readStore();
       store.loginHistory.push({ user: username, time: formatIdDateTime() });
       if (store.loginHistory.length > 50) store.loginHistory = store.loginHistory.slice(-50);
       writeStore(store);
-      return sendJson(res, 200, { ok: true, username }, { 'set-cookie': cookieHeader(sid, req) });
+      
+      return sendJson(res, 200, { ok: true, username }, { 'set-cookie': cookieHeader(token) });
     }
 
     // 2. ROUTE: LOGOUT ADMIN
     if (req.method === 'POST' && cleanPath === '/admin/logout') {
-      clearSession(req);
       return sendJson(res, 200, { ok: true }, { 'set-cookie': clearCookieHeader() });
     }
 
@@ -253,7 +259,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 6. ROUTE: DETAIL/EDIT/HAPUS LAYANAN LAUNDRY BY ID (ADMIN ONLY)
+    // 6. ROUTE: EDIT/HAPUS LAYANAN LAUNDRY BY ID (ADMIN ONLY)
     const serviceMatch = cleanPath.match(/^\/admin\/services\/(\d+)$/);
     if (serviceMatch) {
       if (!requireAdmin(req, res)) return;
@@ -294,7 +300,7 @@ module.exports = async (req, res) => {
       const ip = getClientKey(req);
       const lastTrxTime = transactionLimits.get(ip) || 0;
       if (Date.now() - lastTrxTime < 3000) {
-        return sendJson(res, 429, { error: 'TOO_MANY_REQUESTS', message: 'Mohon tunggu beberapa detik sebelum membuat transaksi baru.' });
+        return sendJson(res, 429, { error: 'TOO_MANY_REQUESTS', message: 'Mohon tunggu.' });
       }
       transactionLimits.set(ip, Date.now());
 
@@ -304,8 +310,7 @@ module.exports = async (req, res) => {
       const items = Array.isArray(body.items) ? body.items : [];
       const completionDate = normalizeString(body.completionDate, 120);
 
-      if (!customer) return sendJson(res, 400, { error: 'VALIDATION', message: 'Nama pelanggan wajib diisi.' });
-      if (items.length === 0) return sendJson(res, 400, { error: 'VALIDATION', message: 'Keranjang kosong.' });
+      if (!customer || items.length === 0) return sendJson(res, 400, { error: 'VALIDATION', message: 'Data tidak lengkap.' });
 
       const store = readStore();
       const servicesById = new Map(store.services.map(service => [service.id, service]));
@@ -324,13 +329,6 @@ module.exports = async (req, res) => {
         const customPrice = service.type === 'kustom' ? Math.floor(Number(rawItem.price)) : service.price;
         const unit = service.type === 'regular' ? Math.max(quantity, service.minWeight || 0) : quantity;
 
-        if (!Number.isFinite(quantity) || quantity <= 0) return sendJson(res, 400, { error: 'VALIDATION', message: 'Qty/berat tidak valid.' });
-        if (!Number.isFinite(duration) || duration <= 0 || duration > 30) return sendJson(res, 400, { error: 'VALIDATION', message: 'Durasi tidak valid.' });
-        
-        if (!Number.isFinite(customPrice) || customPrice < 100) {
-          return sendJson(res, 400, { error: 'VALIDATION', message: 'Harga layanan kustom tidak valid (Minimal Rp100).' });
-        }
-
         const subtotal = Math.round(unit * customPrice);
         total += subtotal;
         safeItems.push({ serviceId, name: service.name, type: service.type, quantity, billedQuantity: unit, price: Math.round(customPrice), reason, duration, subtotal });
@@ -338,17 +336,7 @@ module.exports = async (req, res) => {
 
       const counter = store.transactionCounter || 1;
       const trxId = `TRX-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(counter).padStart(4, '0')}`;
-      const transaction = {
-        id: trxId,
-        date: formatIdDate(),
-        dateTime: new Date().toLocaleString('id-ID'),
-        customer,
-        phone,
-        items: safeItems,
-        total,
-        completionDate,
-        status: 'Selesai'
-      };
+      const transaction = { id: trxId, date: formatIdDate(), dateTime: new Date().toLocaleString('id-ID'), customer, phone, items: safeItems, total, completionDate, status: 'Selesai' };
 
       store.transactions.push(transaction);
       store.transactionCounter = counter + 1;
@@ -356,10 +344,9 @@ module.exports = async (req, res) => {
       return sendJson(res, 201, { ok: true, transaction });
     }
 
-    // DEBUG KELUARAN JIKA BELUM ADA PATH YANG COCOK
-    return sendJson(res, 404, { error: 'NOT_FOUND', message: `Endpoint '${cleanPath}' tidak terdeteksi di serverless function.` });
+    return sendJson(res, 404, { error: 'NOT_FOUND', message: `Endpoint '${cleanPath}' tidak terdeteksi.` });
     
   } catch (error) {
-    return sendJson(res, 500, { error: 'SERVER_ERROR', message: error.message || 'Terjadi kesalahan internal backend.' });
+    return sendJson(res, 500, { error: 'SERVER_ERROR', message: error.message || 'Kesalahan backend.' });
   }
 };
