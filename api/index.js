@@ -7,12 +7,8 @@ const ROOT = path.join(__dirname, '..');
 const DATA_DIR = path.join(ROOT, 'data');
 const STORE_FILE = path.join(DATA_DIR, 'store.json');
 
-// =========================================================================
-// PENGATURAN KREDENSIAL LOGIN ADMIN
-// =========================================================================
-const CUSTOM_USER = "hilal";
-const CUSTOM_PASS = "kasir123";
-// =========================================================================
+const CUSTOM_USER = "ninxy";
+const CUSTOM_PASS = "123123";
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
