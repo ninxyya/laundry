@@ -230,33 +230,41 @@
     </div>
 
     <script>
-        if (window.location.protocol === 'file:') {
-            window.location.replace('http://localhost:3000/adm.html');
+    // Deteksi otomatis apakah web berjalan di local komputer atau di cloud Vercel
+    const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (window.location.protocol === 'file:' && IS_LOCAL) {
+        window.location.replace('http://localhost:3000/adm.html');
+    }
+
+    let editId = null;
+    let chartInstance = null;
+    let servicesCache = [];
+    let transactionsCache = [];
+    
+    // URL Base otomatis menyesuaikan lingkungan host
+    const API_BASE_URL = IS_LOCAL ? 'http://127.0.0.1:3000' : '';
+
+    async function apiRequest(url, options = {}) {
+        let response;
+        try {
+            response = await fetch(`${API_BASE_URL}${url}`, {
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+                ...options
+            });
+        } catch (err) {
+            // Perbaikan: Pesan error dinamis sesuai tempat web dibuka
+            const errorMsg = IS_LOCAL 
+                ? 'Server admin lokal tidak terhubung. Pastikan server.js berjalan di port 3000.' 
+                : 'Gagal terhubung ke sistem admin di cloud. Silakan coba login kembali.';
+            throw new Error(errorMsg);
         }
 
-        let editId = null;
-        let chartInstance = null;
-        let servicesCache = [];
-        let transactionsCache = [];
-        const API_BASE_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:3000' : '';
-
-        async function apiRequest(url, options = {}) {
-            let response;
-            try {
-                response = await fetch(`${API_BASE_URL}${url}`, {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-                    ...options
-                });
-            } catch {
-                throw new Error('Server tidak terhubung. Buka lewat http://localhost:3000/adm.html dan pastikan server.js berjalan.');
-            }
-
-            const payload = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(payload.message || 'Request gagal.');
-            return payload;
-        }
-
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.message || 'Verifikasi login gagal.');
+        return payload;
+    }
         function formatCurrency(value) {
             return `Rp ${(Number(value) || 0).toLocaleString('id-ID')}`;
         }
