@@ -149,7 +149,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    if (req.method === 'POST' && pathname === '/api/admin/login') {
+    if (req.method === 'POST' && pathname === '/admin/login') {
       const key = getClientKey(req);
       const attempt = loginAttempts.get(key) || { count: 0, lockedUntil: 0 };
       if (attempt.lockedUntil > Date.now()) {
@@ -187,7 +187,7 @@ module.exports = async (req, res) => {
       return sendJson(res, 200, { authenticated: hasValidAdmin, username: session ? session.username : null });
     }
 
-    if (req.method === 'GET' && pathname === '/api/services') {
+    if (req.method === 'GET' && pathname === '/services') {
       return sendJson(res, 200, { services: readStore().services });
     }
 
