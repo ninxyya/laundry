@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/adm", "destination": "/adm.html" },
+    { "source": "/kasir", "destination": "/kasir.html" },
+    { "source": "/", "destination": "/kasir.html" }
+  ]
+}
