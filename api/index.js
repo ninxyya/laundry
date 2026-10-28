@@ -1,19 +1,17 @@
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
 const url = require('url');
-
-const ROOT = path.join(__dirname, '..');
-const DATA_DIR = path.join(ROOT, 'data');
-const STORE_FILE = path.join(DATA_DIR, 'store.json');
+const { kv } = require('@vercel/kv');
 
 // =========================================================================
-// PENGATURAN KREDENSIAL LOGIN ADMIN
+// KREDENSIAL ADMIN — TIDAK ADA LAGI DI SOURCE CODE.
+// Disimpan di Vercel KV (key "admin:credentials": {username, salt, hash}).
+// Satu-satunya jalur untuk membuat/ganti password: scripts/set-admin-password.js
+// (dijalankan lokal, baca KV_REST_API_URL/TOKEN dari `vercel env pull`).
+// Endpoint di file ini hanya pernah membaca (GET), tidak pernah menulis
+// credential, dan tidak pernah mengembalikannya ke client.
 // =========================================================================
-const CUSTOM_USER = "ninxy";
-const CUSTOM_PASS = "123123";
-const SECRET_KEY = "aisha_laundry_secure_token_secret_2026";
-// =========================================================================
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const PBKDF2_ITERATIONS = 210000;
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -26,18 +24,28 @@ const defaultServices = [
   { id: 4, name: 'Dry Clean Premium', type: 'regular', price: 15000, minWeight: 3 }
 ];
 
-// Memory tracking untuk limit & login attempts (bersifat jangka pendek di serverless)
-const loginAttempts = new Map();
+// In-memory fallback for login/transaction throttling. Best-effort only:
+// serverless instances are not shared, so this does NOT fully replace a
+// real distributed rate limiter, but it still blocks naive brute force
+// within a warm instance. KV-backed lockout (below) is the real guard.
 const transactionLimits = new Map();
 
-// =========================================================================
-// FUNGSI STATELESS TOKEN (Pengganti Map Sesi yang Hilang di Vercel)
-// =========================================================================
+function deriveHash(password, salt) {
+  return crypto.pbkdf2Sync(String(password), salt, PBKDF2_ITERATIONS, 32, 'sha256').toString('hex');
+}
+
+function verifyPassword(password, salt, expectedHashHex) {
+  const actual = Buffer.from(deriveHash(password, salt), 'hex');
+  const expected = Buffer.from(expectedHashHex, 'hex');
+  if (actual.length !== expected.length) return false;
+  return crypto.timingSafeEqual(actual, expected);
+}
+
 function generateToken(username) {
   const expiresAt = Date.now() + SESSION_TTL_MS;
   const payload = JSON.stringify({ username, role: 'admin', expiresAt });
   const encodedPayload = Buffer.from(payload).toString('base64url');
-  const signature = crypto.createHmac('sha256', SECRET_KEY).update(encodedPayload).digest('base64url');
+  const signature = crypto.createHmac('sha256', SESSION_SECRET).update(encodedPayload).digest('base64url');
   return `${encodedPayload}.${signature}`;
 }
 
@@ -45,55 +53,62 @@ function verifyToken(token) {
   if (!token) return null;
   const parts = token.split('.');
   if (parts.length !== 2) return null;
-  
+
   const [encodedPayload, signature] = parts;
-  const expectedSignature = crypto.createHmac('sha256', SECRET_KEY).update(encodedPayload).digest('base64url');
-  
-  if (signature !== expectedSignature) return null; // Token palsu/dimanipulasi
-  
+  const expectedSignature = crypto.createHmac('sha256', SESSION_SECRET).update(encodedPayload).digest('base64url');
+  const sigBuf = Buffer.from(signature);
+  const expBuf = Buffer.from(expectedSignature);
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+
   try {
     const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
-    if (payload.expiresAt <= Date.now()) return null; // Token kedaluwarsa
+    if (payload.expiresAt <= Date.now()) return null;
     return payload;
   } catch {
     return null;
   }
 }
-// =========================================================================
 
-function ensureStore() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(STORE_FILE)) {
-    try {
-      fs.writeFileSync(STORE_FILE, JSON.stringify({ services: defaultServices, transactions: [], loginHistory: [], transactionCounter: 1 }, null, 2));
-    } catch (e) {
-      console.error("Gagal inisialisasi store.json:", e);
-    }
+// ===== STORE (services/transactions/loginHistory) — persisted in Vercel KV =====
+const STORE_KEY = 'store:main';
+
+async function readStore() {
+  const parsed = await kv.get(STORE_KEY);
+  if (!parsed) {
+    const fresh = { services: defaultServices, transactions: [], loginHistory: [], transactionCounter: 1 };
+    await kv.set(STORE_KEY, fresh);
+    return fresh;
   }
+  return {
+    services: Array.isArray(parsed.services) ? parsed.services : defaultServices,
+    transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+    loginHistory: Array.isArray(parsed.loginHistory) ? parsed.loginHistory : [],
+    transactionCounter: Number.isInteger(parsed.transactionCounter) ? parsed.transactionCounter : 1
+  };
 }
 
-function readStore() {
-  ensureStore();
-  try {
-    const parsed = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
-    return {
-      services: Array.isArray(parsed.services) ? parsed.services : defaultServices,
-      transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
-      loginHistory: Array.isArray(parsed.loginHistory) ? parsed.loginHistory : [],
-      transactionCounter: Number.isInteger(parsed.transactionCounter) ? parsed.transactionCounter : 1
-    };
-  } catch {
-    return { services: defaultServices, transactions: [], loginHistory: [], transactionCounter: 1 };
-  }
+async function writeStore(store) {
+  await kv.set(STORE_KEY, store);
 }
 
-function writeStore(store) {
-  ensureStore();
-  try {
-    fs.writeFileSync(STORE_FILE, JSON.stringify(store, null, 2));
-  } catch (e) {
-    console.error("Gagal menulis data ke store.json (Keterbatasan Serverless Vercel):", e);
-  }
+async function getAdminCredentials(username) {
+  const record = await kv.get(`admin:credentials:${username}`);
+  if (!record || !record.salt || !record.hash) return null;
+  return record;
+}
+
+// ===== KV-backed login lockout (survives across instances, unlike the Map) =====
+async function getLoginAttempt(key) {
+  const data = await kv.get(`login:attempt:${key}`);
+  return data || { count: 0, lockedUntil: 0 };
+}
+
+async function setLoginAttempt(key, attempt) {
+  await kv.set(`login:attempt:${key}`, attempt, { ex: Math.ceil(LOGIN_LOCK_MS / 1000) + 60 });
+}
+
+async function clearLoginAttempt(key) {
+  await kv.del(`login:attempt:${key}`);
 }
 
 function sendJson(res, status, payload, headers = {}) {
@@ -115,7 +130,7 @@ function getClientKey(req) {
 }
 
 function getSession(req) {
-  const sid = parseCookies(req).sid; // Cookie sid sekarang berisi encrypted token
+  const sid = parseCookies(req).sid;
   return verifyToken(sid);
 }
 
@@ -126,6 +141,10 @@ function requireAdmin(req, res) {
     return null;
   }
   return session;
+}
+
+function hasCsrfHeader(req) {
+  return req.headers['x-requested-with'] === 'aisha-laundry';
 }
 
 function readBody(req) {
@@ -172,20 +191,25 @@ function clearCookieHeader() {
   return 'sid=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0';
 }
 
+const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'DELETE']);
+
 // MAIN HANDLER FOR VERCEL
 module.exports = async (req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  
-  let cleanPath = parsedUrl.pathname.replace(/^\/api/, '');
-  if (cleanPath.length > 1 && cleanPath.endsWith('/')) {
-    cleanPath = cleanPath.slice(0, -1);
+  if (!SESSION_SECRET) {
+    return sendJson(res, 500, { error: 'SERVER_MISCONFIGURED', message: 'SESSION_SECRET belum di-set di environment variable Vercel.' });
   }
+
+  const parsedUrl = url.parse(req.url, true);
+  let cleanPath = parsedUrl.pathname.replace(/^\/api/, '');
+  if (cleanPath.length > 1 && cleanPath.endsWith('/')) cleanPath = cleanPath.slice(0, -1);
 
   const origin = req.headers.origin;
   res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Cookie');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Cookie, X-Requested-With');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -193,10 +217,14 @@ module.exports = async (req, res) => {
   }
 
   try {
+    if (STATE_CHANGING_METHODS.has(req.method) && !hasCsrfHeader(req)) {
+      return sendJson(res, 403, { error: 'CSRF_CHECK_FAILED', message: 'Header keamanan tidak lengkap.' });
+    }
+
     // 1. ROUTE: LOGIN ADMIN
     if (req.method === 'POST' && cleanPath === '/admin/login') {
       const key = getClientKey(req);
-      const attempt = loginAttempts.get(key) || { count: 0, lockedUntil: 0 };
+      const attempt = await getLoginAttempt(key);
       if (attempt.lockedUntil > Date.now()) {
         const minutes = Math.ceil((attempt.lockedUntil - Date.now()) / 60000);
         return sendJson(res, 429, { error: 'LOCKED', message: `Terlalu banyak percobaan gagal. Coba lagi dalam ${minutes} menit.` });
@@ -204,23 +232,26 @@ module.exports = async (req, res) => {
 
       const body = await readBody(req);
       const username = normalizeString(body.username, 80);
-      const passwordInput = body.password || '';
+      const record = await getAdminCredentials(username);
+      const passwordOk = record
+        ? verifyPassword(body.password || '', record.salt, record.hash)
+        : (deriveHash(body.password || '', 'dummy-salt-constant-time'), false);
 
-      if (username !== CUSTOM_USER || passwordInput !== CUSTOM_PASS) {
+      if (!record || !passwordOk) {
         const nextCount = attempt.count + 1;
         const lockedUntil = nextCount >= MAX_LOGIN_ATTEMPTS ? Date.now() + LOGIN_LOCK_MS : 0;
-        loginAttempts.set(key, { count: nextCount, lockedUntil });
+        await setLoginAttempt(key, { count: nextCount, lockedUntil });
         return sendJson(res, 401, { error: 'INVALID_LOGIN', message: lockedUntil ? 'Akses dikunci sementara.' : `Gagal! Sisa percobaan: ${MAX_LOGIN_ATTEMPTS - nextCount}.` });
       }
 
-      loginAttempts.delete(key);
-      const token = generateToken(username); // Membuat stateless token baru
-      
-      const store = readStore();
+      await clearLoginAttempt(key);
+      const token = generateToken(username);
+
+      const store = await readStore();
       store.loginHistory.push({ user: username, time: formatIdDateTime() });
       if (store.loginHistory.length > 50) store.loginHistory = store.loginHistory.slice(-50);
-      writeStore(store);
-      
+      await writeStore(store);
+
       return sendJson(res, 200, { ok: true, username }, { 'set-cookie': cookieHeader(token) });
     }
 
@@ -232,21 +263,19 @@ module.exports = async (req, res) => {
     // 3. ROUTE: CEK SESI ADMIN
     if (req.method === 'GET' && cleanPath === '/admin/session') {
       const session = getSession(req);
-      const hasValidAdmin = Boolean(session && session.role === 'admin');
-      const resolvedUsername = (session && session.username) ? session.username : null;
-      return sendJson(res, 200, { authenticated: hasValidAdmin, username: resolvedUsername });
+      return sendJson(res, 200, { authenticated: Boolean(session && session.role === 'admin'), username: session?.username || null });
     }
 
     // 4. ROUTE: AMBIL DATA LAYANAN (PUBLIC KASIR)
     if (req.method === 'GET' && cleanPath === '/services') {
-      const store = readStore();
+      const store = await readStore();
       return sendJson(res, 200, { services: store.services });
     }
 
     // 5. ROUTE: MANAJEMEN LAYANAN LAUNDRY (ADMIN ONLY)
     if (cleanPath === '/admin/services') {
       if (!requireAdmin(req, res)) return;
-      const store = readStore();
+      const store = await readStore();
 
       if (req.method === 'GET') return sendJson(res, 200, { services: store.services });
 
@@ -254,7 +283,7 @@ module.exports = async (req, res) => {
         const service = sanitizeService(await readBody(req));
         const nextId = store.services.length ? Math.max(...store.services.map(item => item.id || 0)) + 1 : 1;
         store.services.push({ ...service, id: nextId });
-        writeStore(store);
+        await writeStore(store);
         return sendJson(res, 201, { ok: true, service: { ...service, id: nextId } });
       }
     }
@@ -264,19 +293,19 @@ module.exports = async (req, res) => {
     if (serviceMatch) {
       if (!requireAdmin(req, res)) return;
       const id = Number(serviceMatch[1]);
-      const store = readStore();
+      const store = await readStore();
       const index = store.services.findIndex(item => item.id === id);
       if (index === -1) return sendJson(res, 404, { error: 'NOT_FOUND', message: 'Layanan tidak ditemukan.' });
 
       if (req.method === 'PUT') {
         store.services[index] = sanitizeService(await readBody(req), id);
-        writeStore(store);
+        await writeStore(store);
         return sendJson(res, 200, { ok: true, service: store.services[index] });
       }
 
       if (req.method === 'DELETE') {
         store.services.splice(index, 1);
-        writeStore(store);
+        await writeStore(store);
         return sendJson(res, 200, { ok: true });
       }
     }
@@ -284,14 +313,14 @@ module.exports = async (req, res) => {
     // 7. ROUTE: DATA TRANSAKSI MASUK (ADMIN ONLY)
     if (req.method === 'GET' && cleanPath === '/admin/transactions') {
       if (!requireAdmin(req, res)) return;
-      const store = readStore();
+      const store = await readStore();
       return sendJson(res, 200, { transactions: store.transactions });
     }
 
     // 8. ROUTE: RIWAYAT LOGIN (ADMIN ONLY)
     if (req.method === 'GET' && cleanPath === '/admin/login-history') {
       if (!requireAdmin(req, res)) return;
-      const store = readStore();
+      const store = await readStore();
       return sendJson(res, 200, { loginHistory: store.loginHistory });
     }
 
@@ -312,7 +341,7 @@ module.exports = async (req, res) => {
 
       if (!customer || items.length === 0) return sendJson(res, 400, { error: 'VALIDATION', message: 'Data tidak lengkap.' });
 
-      const store = readStore();
+      const store = await readStore();
       const servicesById = new Map(store.services.map(service => [service.id, service]));
       const safeItems = [];
       let total = 0;
@@ -325,9 +354,11 @@ module.exports = async (req, res) => {
         const quantity = Number(rawItem.quantity);
         const duration = Number(rawItem.duration);
         const reason = normalizeString(rawItem.reason, 160);
-        
+
         const customPrice = service.type === 'kustom' ? Math.floor(Number(rawItem.price)) : service.price;
         const unit = service.type === 'regular' ? Math.max(quantity, service.minWeight || 0) : quantity;
+
+        if (!Number.isFinite(customPrice) || customPrice <= 0) return sendJson(res, 400, { error: 'VALIDATION', message: 'Harga tidak valid.' });
 
         const subtotal = Math.round(unit * customPrice);
         total += subtotal;
@@ -340,13 +371,14 @@ module.exports = async (req, res) => {
 
       store.transactions.push(transaction);
       store.transactionCounter = counter + 1;
-      writeStore(store);
+      await writeStore(store);
       return sendJson(res, 201, { ok: true, transaction });
     }
 
     return sendJson(res, 404, { error: 'NOT_FOUND', message: `Endpoint '${cleanPath}' tidak terdeteksi.` });
-    
+
   } catch (error) {
+    console.error(error);
     return sendJson(res, 500, { error: 'SERVER_ERROR', message: error.message || 'Kesalahan backend.' });
   }
 };
