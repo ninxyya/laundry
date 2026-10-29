@@ -24,11 +24,7 @@ const defaultServices = [
   { id: 4, name: 'Dry Clean Premium', type: 'regular', price: 15000, minWeight: 3 }
 ];
 
-// In-memory fallback for login/transaction throttling. Best-effort only:
-// serverless instances are not shared, so this does NOT fully replace a
-// real distributed rate limiter, but it still blocks naive brute force
-// within a warm instance. KV-backed lockout (below) is the real guard.
-const transactionLimits = new Map();
+const TRX_RATE_LIMIT_MS = 3000;
 
 function deriveHash(password, salt) {
   return crypto.pbkdf2Sync(String(password), salt, PBKDF2_ITERATIONS, 32, 'sha256').toString('hex');
@@ -125,8 +121,11 @@ function parseCookies(req) {
   }));
 }
 
+// IP asli dari koneksi TCP. TIDAK boleh baca dari header x-forwarded-for:
+// header itu dikirim client, bisa dipalsukan bebas, dan dulu dipakai sebagai
+// kunci lockout login sehingga brute force tinggal ganti-ganti header.
 function getClientKey(req) {
-  return (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local').toString().split(',')[0].trim();
+  return (req.socket.remoteAddress || 'local').toString();
 }
 
 function getSession(req) {
@@ -193,6 +192,13 @@ function clearCookieHeader() {
 
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'DELETE']);
 
+// Daftar origin yang boleh akses API dengan cookie. Ganti/tambah domain di
+// sini kalau nanti pakai custom domain. Jangan reflect origin apa saja.
+const ALLOWED_ORIGINS = [
+  'https://laundry-xi-three.vercel.app',
+  ...(process.env.EXTRA_ALLOWED_ORIGIN ? [process.env.EXTRA_ALLOWED_ORIGIN] : [])
+];
+
 // MAIN HANDLER FOR VERCEL
 module.exports = async (req, res) => {
   if (!SESSION_SECRET) {
@@ -204,8 +210,13 @@ module.exports = async (req, res) => {
   if (cleanPath.length > 1 && cleanPath.endsWith('/')) cleanPath = cleanPath.slice(0, -1);
 
   const origin = req.headers.origin;
-  res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  // Request same-origin (tanpa header Origin, misal navigasi langsung atau
+  // curl) tetap jalan normal — header CORS di atas cuma relevan untuk
+  // request lintas origin dari browser.
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Cookie, X-Requested-With');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -223,28 +234,46 @@ module.exports = async (req, res) => {
 
     // 1. ROUTE: LOGIN ADMIN
     if (req.method === 'POST' && cleanPath === '/admin/login') {
-      const key = getClientKey(req);
-      const attempt = await getLoginAttempt(key);
-      if (attempt.lockedUntil > Date.now()) {
-        const minutes = Math.ceil((attempt.lockedUntil - Date.now()) / 60000);
+      const body = await readBody(req);
+      const username = normalizeString(body.username, 80);
+
+      // Dua kunci lockout: per-IP (tahan brute force dari satu sumber) dan
+      // per-username (tahan brute force walau penyerang ganti-ganti IP).
+      const ipKey = `ip:${getClientKey(req)}`;
+      const userKey = username ? `user:${username}` : null;
+
+      const ipAttempt = await getLoginAttempt(ipKey);
+      const userAttempt = userKey ? await getLoginAttempt(userKey) : { count: 0, lockedUntil: 0 };
+      const activeLock = Math.max(ipAttempt.lockedUntil, userAttempt.lockedUntil);
+      if (activeLock > Date.now()) {
+        const minutes = Math.ceil((activeLock - Date.now()) / 60000);
         return sendJson(res, 429, { error: 'LOCKED', message: `Terlalu banyak percobaan gagal. Coba lagi dalam ${minutes} menit.` });
       }
 
-      const body = await readBody(req);
-      const username = normalizeString(body.username, 80);
       const record = await getAdminCredentials(username);
       const passwordOk = record
         ? verifyPassword(body.password || '', record.salt, record.hash)
         : (deriveHash(body.password || '', 'dummy-salt-constant-time'), false);
 
       if (!record || !passwordOk) {
-        const nextCount = attempt.count + 1;
-        const lockedUntil = nextCount >= MAX_LOGIN_ATTEMPTS ? Date.now() + LOGIN_LOCK_MS : 0;
-        await setLoginAttempt(key, { count: nextCount, lockedUntil });
-        return sendJson(res, 401, { error: 'INVALID_LOGIN', message: lockedUntil ? 'Akses dikunci sementara.' : `Gagal! Sisa percobaan: ${MAX_LOGIN_ATTEMPTS - nextCount}.` });
+        const nextIpCount = ipAttempt.count + 1;
+        const ipLockedUntil = nextIpCount >= MAX_LOGIN_ATTEMPTS ? Date.now() + LOGIN_LOCK_MS : 0;
+        await setLoginAttempt(ipKey, { count: nextIpCount, lockedUntil: ipLockedUntil });
+
+        let userLockedUntil = 0;
+        if (userKey) {
+          const nextUserCount = userAttempt.count + 1;
+          userLockedUntil = nextUserCount >= MAX_LOGIN_ATTEMPTS ? Date.now() + LOGIN_LOCK_MS : 0;
+          await setLoginAttempt(userKey, { count: nextUserCount, lockedUntil: userLockedUntil });
+        }
+
+        const lockedUntil = Math.max(ipLockedUntil, userLockedUntil);
+        const remaining = MAX_LOGIN_ATTEMPTS - Math.max(nextIpCount, userAttempt.count + (userKey ? 1 : 0));
+        return sendJson(res, 401, { error: 'INVALID_LOGIN', message: lockedUntil ? 'Akses dikunci sementara.' : `Gagal! Sisa percobaan: ${Math.max(remaining, 0)}.` });
       }
 
-      await clearLoginAttempt(key);
+      await clearLoginAttempt(ipKey);
+      if (userKey) await clearLoginAttempt(userKey);
       const token = generateToken(username);
 
       const store = await readStore();
@@ -326,12 +355,15 @@ module.exports = async (req, res) => {
 
     // 9. ROUTE: POST TRANSAKSI BARU DARI KASIR
     if (req.method === 'POST' && cleanPath === '/transactions') {
-      const ip = getClientKey(req);
-      const lastTrxTime = transactionLimits.get(ip) || 0;
-      if (Date.now() - lastTrxTime < 3000) {
+      // Dikunci di KV (bukan Map di memori) supaya batasnya berlaku lintas
+      // instance serverless, dan key pakai IP asli (lihat getClientKey),
+      // bukan header yang bisa dipalsukan.
+      const trxKey = `trx:limit:${getClientKey(req)}`;
+      const lastTrxTime = (await kv.get(trxKey)) || 0;
+      if (Date.now() - lastTrxTime < TRX_RATE_LIMIT_MS) {
         return sendJson(res, 429, { error: 'TOO_MANY_REQUESTS', message: 'Mohon tunggu.' });
       }
-      transactionLimits.set(ip, Date.now());
+      await kv.set(trxKey, Date.now(), { ex: Math.ceil(TRX_RATE_LIMIT_MS / 1000) + 5 });
 
       const body = await readBody(req);
       const customer = normalizeString(body.customer, 120);
@@ -378,7 +410,9 @@ module.exports = async (req, res) => {
     return sendJson(res, 404, { error: 'NOT_FOUND', message: `Endpoint '${cleanPath}' tidak terdeteksi.` });
 
   } catch (error) {
+    // Detail asli cuma ke log server. Client cuma dapat pesan generik
+    // supaya tidak ada info internal (query, nama variabel, dll) yang bocor.
     console.error(error);
-    return sendJson(res, 500, { error: 'SERVER_ERROR', message: error.message || 'Kesalahan backend.' });
+    return sendJson(res, 500, { error: 'SERVER_ERROR', message: 'Kesalahan backend.' });
   }
 };
